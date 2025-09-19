@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Mon Agrégateur RSS</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #feeds, #items { margin-top: 20px; }
+    li { cursor: pointer; margin-bottom: 5px; }
+    li:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <h1>Mes flux RSS</h1>
+
+  <div id="feeds">
+    <h2>Flux disponibles :</h2>
+    <ul id="feed-list"></ul>
+  </div>
+
+  <div id="items">
+    <h2>Articles :</h2>
+    <ul id="item-list"></ul>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    // 1️⃣ Récupérer la liste des flux
+    async function fetchFeeds() {
+      try {
+        const response = await fetch(`${API_BASE}/feeds/`);
+        if (!response.ok) throw new Error("Erreur lors de la récupération des flux");
+        const feeds = await response.json();
+
+        const feedList = document.getElementById("feed-list");
+        feedList.innerHTML = "";
+
+        feeds.forEach(feed => {
+          const li = document.createElement("li");
+          li.textContent = feed.title || feed.url;
+          li.onclick = () => fetchFeedItems(feed.id);
+          feedList.appendChild(li);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // 2️⃣ Récupérer les articles d’un flux spécifique
+    async function fetchFeedItems(feedId) {
+      try {
+        const response = await fetch(`${API_BASE}/feeds/${feedId}/items/`);
+        if (!response.ok) throw new Error("Erreur lors de la récupération des articles");
+        const items = await response.json();
+
+        const itemList = document.getElementById("item-list");
+        itemList.innerHTML = "";
+
+        items.forEach(item => {
+          const li = document.createElement("li");
+          li.innerHTML = `<a href="${item.link}" target="_blank">${item.title}</a> - ${new Date(item.published_date).toLocaleString()}`;
+          itemList.appendChild(li);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Lancer au chargement
+    fetchFeeds();
+  </script>
+
+</body>
+</html>
