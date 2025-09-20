@@ -1,0 +1,152 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Mes flux RSS{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card feed-stats">
+                    <div class="card-body text-center">
+                        <i class="fas fa-rss fa-2x mb-2"></i>
+                        <h4 class="mb-0">{{ total_feeds }}</h4>
+                        <small>Flux RSS</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card feed-stats">
+                    <div class="card-body text-center">
+                        <i class="fas fa-newspaper fa-2x mb-2"></i>
+                        <h4 class="mb-0">{{ total_articles }}</h4>
+                        <small>Articles</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-sync fa-2x mb-2"></i>
+                        <div class="mb-2">Actualiser</div>
+                        <a href="{% url 'refresh_all_feeds' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-sync"></i> Tous les flux
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recherche -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Rechercher un flux..." 
+                               value="{{ search }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Rechercher
+                        </button>
+                    </div>
+                </form>
+                {% if search %}
+                    <div class="mt-2">
+                        <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times"></i> Effacer
+                        </a>
+                        <small class="text-muted ms-2">
+                            Résultats pour "{{ search }}"
+                        </small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des flux -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i> Mes flux RSS
+                    {% if search %}
+                        <small class="text-muted">(résultats pour "{{ search }}")</small>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if feeds %}
+                    <div class="row">
+                        {% for feed in feeds %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <a href="{% url 'feed_detail' feed.id %}" class="text-decoration-none">
+                                                {{ feed.title|default:feed.url|truncatechars:50 }}
+                                            </a>
+                                        </h6>
+                                        <p class="card-text text-muted small">
+                                            {{ feed.description|default:"Aucune description"|truncatechars:100 }}
+                                        </p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <i class="fas fa-newspaper"></i> 
+                                                {{ feed.items.count }} articles
+                                            </small>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'feed_detail' feed.id %}" 
+                                                   class="btn btn-primary" title="Voir les articles">
+                                                    <i class="fas fa-eye"></i> Voir
+                                                </a>
+                                                <a href="{% url 'update_feed' feed.id %}" 
+                                                   class="btn btn-success" title="Actualiser">
+                                                    <i class="fas fa-sync"></i>
+                                                </a>
+                                                <a href="{% url 'delete_feed' feed.id %}" 
+                                                   class="btn btn-danger" title="Supprimer"
+                                                   onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce flux ?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-rss fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">
+                            {% if search %}
+                                Aucun flux trouvé pour "{{ search }}"
+                            {% else %}
+                                Aucun flux RSS disponible
+                            {% endif %}
+                        </h4>
+                        <p class="text-muted">
+                            {% if search %}
+                                Essayez avec d'autres mots-clés ou 
+                                <a href="{% url 'index' %}">voir tous les flux</a>
+                            {% else %}
+                                Vos flux RSS apparaîtront ici une fois ajoutés via l'administration Django.
+                            {% endif %}
+                        </p>
+                        {% if not search %}
+                            <a href="/admin/" class="btn btn-primary" target="_blank">
+                                <i class="fas fa-cog"></i> Administration Django
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

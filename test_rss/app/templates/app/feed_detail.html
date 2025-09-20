@@ -1,0 +1,199 @@
+{% extends 'app/base.html' %}
+
+{% block title %}{{ feed.title|default:feed.url }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="mb-1">{{ feed.title|default:feed.url }}</h4>
+                        <p class="text-muted mb-2">{{ feed.description|default:"Aucune description disponible" }}</p>
+                        <small class="text-muted">
+                            <i class="fas fa-link"></i> <a href="{{ feed.url }}" target="_blank">{{ feed.url }}</a> |
+                            <i class="fas fa-newspaper"></i> {{ articles.paginator.count }} articles
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="btn-group">
+                            <a href="{% url 'index' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </a>
+                            <a href="{% url 'update_feed' feed.id %}" class="btn btn-success">
+                                <i class="fas fa-sync"></i> Actualiser
+                            </a>
+                            <a href="{% url 'delete_feed' feed.id %}" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Rechercher dans les articles de ce flux..." 
+                               value="{{ search }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Rechercher
+                        </button>
+                    </div>
+                </form>
+                {% if search %}
+                    <div class="mt-2">
+                        <a href="{% url 'feed_detail' feed.id %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times"></i> Effacer la recherche
+                        </a>
+                        <small class="text-muted ms-2">
+                            {{ articles.paginator.count }} résultat{{ articles.paginator.count|pluralize }} pour "{{ search }}"
+                        </small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-12">
+        {% if articles %}
+            {% for article in articles %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a href="{{ article.link }}" target="_blank" class="article-title">
+                                {{ article.title }}
+                            </a>
+                        </h5>
+                        
+                        <div class="card-text">
+                            {% if article.description %}
+                                <p class="text-muted">{{ article.description|truncatewords:30 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i>
+                                {% if article.published_date %}
+                                    {{ article.published_date|date:"d/m/Y à H:i" }}
+                                {% else %}
+                                    Date inconnue
+                                {% endif %}
+                            </small>
+                            
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ article.link }}" target="_blank" class="btn btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i> Lire
+                                </a>
+                                <button class="btn btn-outline-secondary" onclick="copyLink('{{ article.link }}', this)">
+                                    <i class="fas fa-copy"></i> Copier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% if articles.has_other_pages %}
+                <nav aria-label="Navigation des articles">
+                    <ul class="pagination justify-content-center">
+                        {% if articles.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ articles.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Page {{ articles.number }} sur {{ articles.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if articles.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ articles.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ articles.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+
+        {% else %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">
+                        {% if search %}
+                            Aucun article trouvé pour "{{ search }}"
+                        {% else %}
+                            Aucun article disponible
+                        {% endif %}
+                    </h4>
+                    <p class="text-muted">
+                        {% if search %}
+                            Essayez avec d'autres mots-clés ou <a href="{% url 'feed_detail' feed.id %}">voir tous les articles</a>
+                        {% else %}
+                            Ce flux ne contient pas encore d'articles ou n'a pas été actualisé récemment.
+                        {% endif %}
+                    </p>
+                    {% if not search %}
+                        <a href="{% url 'update_feed' feed.id %}" class="btn btn-primary">
+                            <i class="fas fa-sync"></i> Actualiser le flux
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyLink(url, button) {
+    navigator.clipboard.writeText(url).then(function() {
+        const originalHtml = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i> Copié !';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHtml;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-secondary');
+        }, 2000);
+    }).catch(function() {
+        button.innerHTML = '<i class="fas fa-times"></i> Erreur';
+        button.classList.add('btn-danger');
+        setTimeout(() => {
+            button.innerHTML = '<i class="fas fa-copy"></i> Copier';
+            button.classList.remove('btn-danger');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}
